@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  app:
+    image: python_bot
+    build:
+      dockerfile: ./src/Dockerfile
+      cache_from:
+        - python_bot
+    container_name: bot
+    environment:
+      REDIS_URL: redis://redis:6379/1
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:6.2
+    container_name: redis
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - cache:/data
+
+volumes:
+  cache:
+    name: redis_data
