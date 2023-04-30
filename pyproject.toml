@@ -38,14 +38,6 @@ combine_star = true
 skip_gitignore = true
 balanced_wrapping = true
 force_grid_wrap = 2
-# Local
-#src_paths = [
-#    "containers",
-#    "api",
-#    "core",
-#    "integrations",
-#    "services",
-#]
 skip_glob = [
     ".git",
     ".idea",
