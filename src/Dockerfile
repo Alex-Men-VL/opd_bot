@@ -27,15 +27,7 @@ RUN apt-get update \
     # Installing `poetry` package manager:
     # https://github.com/python-poetry/poetry
     && curl -sSL 'https://install.python-poetry.org' | python - \
-    && poetry --version \
-    # Installing `dockerize` utility:
-    # https://github.com/jwilder/dockerize
-    && wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
-    && tar -C /usr/local/bin -xzvf dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
-    && dockerize --version \
-    # Installing setuptools:
-    # https://github.com/pypa/setuptools/issues/581
-    && wget https://bitbucket.org/pypa/setuptools/raw/bootstrap/ez_setup.py -O - | python
+    && poetry --version
 
 WORKDIR ${APP_ROOT}
 
