@@ -53,7 +53,7 @@ class RedisPersistence(BasePersistence[UD, CD, BD]):
         self.callback_data_key = callback_data_key
         self.chat_data_key = chat_data_key
         self.conversations_key = conversations_key
-        self._initial_data = initial_data
+        self._initial_data = initial_data or {}
         self.on_flush = on_flush
         self.user_data: Optional[Dict[int, UD]] = None
         self.chat_data: Optional[Dict[int, CD]] = None
