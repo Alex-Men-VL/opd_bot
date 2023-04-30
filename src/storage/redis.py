@@ -22,7 +22,8 @@ class RedisStorage(AbstractStorage):
     async def get_questions(self) -> list[QuestionDTO]:
         async with aioredis.from_url(self.redis_url, decode_responses=True) as redis_conn:
             keys = await redis_conn.keys('questions:*')
-            keys.remove('questions:id')
+            if 'questions:id' in keys:
+                keys.remove('questions:id')
             questions = []
             for key in keys:
                 question = await redis_conn.hgetall(key)
@@ -42,7 +43,8 @@ class RedisStorage(AbstractStorage):
     async def get_answer_by_question(self, question_text: str) -> str | None:
         async with aioredis.from_url(self.redis_url, decode_responses=True) as redis_conn:
             keys = await redis_conn.keys('questions:*')
-            keys.remove('questions:id')
+            if 'questions:id' in keys:
+                keys.remove('questions:id')
             for key in keys:
                 question = await redis_conn.hget(key, 'question')
                 if question == question_text:
