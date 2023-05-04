@@ -5,7 +5,6 @@ from telegram import (
     Update,
 )
 from telegram.ext import ContextTypes
-from telegram.helpers import escape_markdown
 
 from constants import (
     LOAD_ANSWER_MESSAGE,
@@ -17,7 +16,10 @@ from constants import (
     START_MESSAGE,
 )
 from dto import QuestionDTO
-from tg_lib import build_questions_menu
+from tg_lib import (
+    build_questions_menu,
+    check_permissions,
+)
 
 
 async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
@@ -52,6 +54,7 @@ async def handle_current_question(update: Update, context: ContextTypes.DEFAULT_
     return 'CURRENT_QUESTION'
 
 
+@check_permissions
 async def handle_load(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     await update.message.reply_text(text=dedent(LOAD_QUESTION_MESSAGE), reply_markup=ReplyKeyboardRemove())
     return 'LOAD_QUESTION'

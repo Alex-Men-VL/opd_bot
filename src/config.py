@@ -15,6 +15,15 @@ class Config(BaseSettings):
         env='REDIS_URL',
     )
 
+    bot_admin_ids: list[int] = Field(
+        env='BOT_ADMIN_IDS',
+        default_factory=list,
+    )
+    debug: bool = Field(
+        env='DEBUG',
+        default=False,
+    )
+
     class Config:
         env_file = '.env'
         env_file_encoding = 'utf-8'
