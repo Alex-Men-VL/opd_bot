@@ -9,7 +9,8 @@ services:
         - python_bot
     container_name: bot
     environment:
-      REDIS_URL: redis://redis:6379/1
+      REDIS_URL: redis://redis:6379/0
+      REDIS_STORAGE_URL: redis://redis:6379/1
     volumes:
       - ./src/:/code
     env_file:

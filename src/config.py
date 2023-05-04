@@ -14,6 +14,18 @@ class Config(BaseSettings):
     redis_url: RedisDsn = Field(
         env='REDIS_URL',
     )
+    redis_storage_url: RedisDsn = Field(
+        env='REDIS_STORAGE_URL',
+    )
+
+    bot_admin_ids: list[int] = Field(
+        env='BOT_ADMIN_IDS',
+        default_factory=list,
+    )
+    debug: bool = Field(
+        env='DEBUG',
+        default=False,
+    )
 
     class Config:
         env_file = '.env'

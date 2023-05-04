@@ -81,7 +81,7 @@ def main() -> None:
     application = Application.builder().token(settings.bot_token).persistence(persistence).post_init(post_init).build()
 
     application.add_handler(MessageHandler(filters.TEXT, handle_users_reply))
-    application.storage = RedisStorage(redis_url=settings.redis_url)
+    application.storage = RedisStorage(redis_url=settings.redis_storage_url)
 
     logger.info('Бот запущен')
 
