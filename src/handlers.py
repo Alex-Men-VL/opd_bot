@@ -1,12 +1,17 @@
 from textwrap import dedent
 
-from telegram import Update
+from telegram import (
+    ReplyKeyboardRemove,
+    Update,
+)
 from telegram.ext import ContextTypes
+from telegram.helpers import escape_markdown
 
 from constants import (
     LOAD_ANSWER_MESSAGE,
     LOAD_CREATED_MESSAGE,
     LOAD_QUESTION_MESSAGE,
+    QUESTION_EMPTY_REQUEST_MESSAGE,
     QUESTION_NOT_FOUND,
     QUESTION_REQUEST_MESSAGE,
     START_MESSAGE,
@@ -26,7 +31,7 @@ async def handle_questions(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     reply_markup = build_questions_menu(questions)
 
     await update.message.reply_text(
-        text=dedent(QUESTION_REQUEST_MESSAGE),
+        text=dedent(QUESTION_REQUEST_MESSAGE) if questions else dedent(QUESTION_EMPTY_REQUEST_MESSAGE),
         reply_markup=reply_markup,
     )
 
@@ -39,7 +44,7 @@ async def handle_current_question(update: Update, context: ContextTypes.DEFAULT_
 
     answer = await context.application.storage.get_answer_by_question(update.message.text)
 
-    await update.message.reply_text(
+    await update.message.reply_markdown_v2(
         text=answer if answer else dedent(QUESTION_NOT_FOUND),
         reply_markup=reply_markup,
     )
@@ -48,7 +53,7 @@ async def handle_current_question(update: Update, context: ContextTypes.DEFAULT_
 
 
 async def handle_load(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
-    await update.message.reply_text(text=dedent(LOAD_QUESTION_MESSAGE))
+    await update.message.reply_text(text=dedent(LOAD_QUESTION_MESSAGE), reply_markup=ReplyKeyboardRemove())
     return 'LOAD_QUESTION'
 
 
@@ -62,7 +67,7 @@ async def handle_load_question(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def handle_load_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
-    message = update.message.text
+    message = update.message.text_markdown_v2_urled
     question = context.user_data.get('question')
     await context.application.storage.save_question(
         QuestionDTO(

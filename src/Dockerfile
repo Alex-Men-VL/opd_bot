@@ -45,4 +45,4 @@ COPY ./src ${APP_ROOT}
 
 USER ${APP_USER}
 
-CMD ["python3", "main.py"]
+CMD ["python3", "/code/main.py"]

@@ -16,6 +16,6 @@ def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
 
 
 def build_questions_menu(questions: list[QuestionDTO]) -> ReplyKeyboardMarkup:
-    button_list = [KeyboardButton(question.question) for question in questions]
-    reply_markup = ReplyKeyboardMarkup(build_menu(button_list, n_cols=1))
+    button_list = [[KeyboardButton(question.question)] for question in questions]
+    reply_markup = ReplyKeyboardMarkup(button_list, resize_keyboard=True)
     return reply_markup

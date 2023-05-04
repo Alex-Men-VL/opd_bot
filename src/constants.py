@@ -6,6 +6,7 @@ START_MESSAGE = '''Привет, политехник!
 
 # QUESTIONS
 QUESTION_REQUEST_MESSAGE = '''Ниже представлен список доступных вопросов'''
+QUESTION_EMPTY_REQUEST_MESSAGE = '''К сожалению, список вопросов пуст'''
 QUESTION_NOT_FOUND = '''Ответ на данный вопрос не найден.'''
 
 # LOAD
