@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 from telegram import (
     BotCommand,
@@ -6,6 +7,7 @@ from telegram import (
 )
 from telegram.ext import (
     Application,
+    CallbackQueryHandler,
     ContextTypes,
     filters,
     MessageHandler,
@@ -13,15 +15,13 @@ from telegram.ext import (
 
 from config import get_settings
 from handlers import (
+    handle_categories,
+    handle_current_category,
     handle_current_question,
-    handle_load,
-    handle_load_answer,
-    handle_load_question,
-    handle_questions,
     handle_start,
 )
 from persistence import RedisPersistence
-from storage.redis import RedisStorage
+from tg_lib import load_questions
 
 
 logger = logging.getLogger('bot')
@@ -37,20 +37,16 @@ async def handle_users_reply(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     if user_reply == '/start':
         user_state = 'START'
-    elif user_reply == '/load':
-        user_state = 'LOAD'
-    elif user_reply == '/questions':
-        user_state = 'QUESTIONS'
+    elif user_reply == '/categories':
+        user_state = 'CATEGORIES'
     else:
         user_state = context.user_data['state'] or 'START'
 
     states_functions = {
         'START': handle_start,
-        'QUESTIONS': handle_questions,
+        'CATEGORIES': handle_categories,
+        'CURRENT_CATEGORY': handle_current_category,
         'CURRENT_QUESTION': handle_current_question,
-        'LOAD': handle_load,
-        'LOAD_QUESTION': handle_load_question,
-        'LOAD_ANSWER': handle_load_answer,
     }
     state_handler = states_functions[user_state]
 
@@ -64,8 +60,7 @@ async def handle_users_reply(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def post_init(application: Application) -> None:
     common_commands = [
         BotCommand('/start', 'Старт бота'),
-        BotCommand('/questions', 'Список вопросов'),
-        BotCommand('/load', 'Загрузить вопросы (доступно только администратору)'),
+        BotCommand('/categories', 'Список категорий вопросов'),
     ]
 
     await application.bot.set_my_commands(
@@ -77,11 +72,17 @@ async def post_init(application: Application) -> None:
 def main() -> None:
     settings = get_settings()
 
-    persistence = RedisPersistence(url=settings.redis_url)
+    questions_per_category = load_questions(path=Path('./questions.json'))
+    initial_data = {
+        'bot_data': {
+            'questions_per_category': questions_per_category,
+        }
+    }
+    persistence = RedisPersistence(url=settings.redis_url, initial_data=initial_data)
     application = Application.builder().token(settings.bot_token).persistence(persistence).post_init(post_init).build()
 
+    application.add_handler(CallbackQueryHandler(handle_users_reply))
     application.add_handler(MessageHandler(filters.TEXT, handle_users_reply))
-    application.storage = RedisStorage(redis_url=settings.redis_storage_url)
 
     logger.info('Бот запущен')
 

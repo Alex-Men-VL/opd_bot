@@ -1,17 +1,15 @@
 # START
 START_MESSAGE = '''Привет, политехник!
-Здесь ты можешь найти ответы на все свои вопросы.
-Чтобы получить список вопросов, напиши /questions
+Здесь ты можешь найти ответы на все свои вопросы
+Чтобы получить список вопросов, напиши /categories
 '''
+
+# CATEGORIES
+CATEGORIES_MESSAGE = '''Выбери интересующую категорию вопросов'''
+INCORRECT_CATEGORY_MESSAGE = '''Выбрана неверная категория'''
 
 # QUESTIONS
-QUESTION_REQUEST_MESSAGE = '''Ниже представлен список доступных вопросов'''
+QUESTION_CATEGORY = '''Вопросы из категории *"{category}"*'''
 QUESTION_EMPTY_REQUEST_MESSAGE = '''К сожалению, список вопросов пуст'''
-QUESTION_NOT_FOUND = '''Ответ на данный вопрос не найден.'''
-
-# LOAD
-LOAD_QUESTION_MESSAGE = '''Введите вопрос.'''
-LOAD_ANSWER_MESSAGE = '''Введите ответ на вопрос.'''
-LOAD_CREATED_MESSAGE = '''Вопрос сохранен.
-Чтобы добавить новый вопрос, отправьте команду /load.
-'''
+QUESTION_NOT_FOUND = '''Ответ на данный вопрос не найден'''
+QUESTION_TEMPLATE = '''*{question}*\n\n{answer}'''

@@ -1,85 +1,100 @@
+from pathlib import Path
 from textwrap import dedent
 
 from telegram import (
-    ReplyKeyboardRemove,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
     Update,
 )
+from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
 from constants import (
-    LOAD_ANSWER_MESSAGE,
-    LOAD_CREATED_MESSAGE,
-    LOAD_QUESTION_MESSAGE,
+    CATEGORIES_MESSAGE,
+    INCORRECT_CATEGORY_MESSAGE,
+    QUESTION_CATEGORY,
     QUESTION_EMPTY_REQUEST_MESSAGE,
     QUESTION_NOT_FOUND,
-    QUESTION_REQUEST_MESSAGE,
+    QUESTION_TEMPLATE,
     START_MESSAGE,
 )
-from dto import QuestionDTO
-from tg_lib import (
-    build_questions_menu,
-    check_permissions,
-)
+from dto import CategoryDTOStruct
+from tg_lib import build_categories_menu
 
 
 async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
     await update.message.reply_text(text=dedent(START_MESSAGE))
 
-    return 'QUESTIONS'
+    return 'CATEGORIES'
 
 
-async def handle_questions(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
-    questions = await context.application.storage.get_questions()
-    reply_markup = build_questions_menu(questions)
+async def handle_categories(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
+    categories = CategoryDTOStruct(context.bot_data.get('questions_per_category')).get_categories()
+    reply_markup = build_categories_menu(categories)
 
-    await update.message.reply_text(
-        text=dedent(QUESTION_REQUEST_MESSAGE) if questions else dedent(QUESTION_EMPTY_REQUEST_MESSAGE),
+    await update.message.reply_text(text=dedent(CATEGORIES_MESSAGE), reply_markup=reply_markup)
+    return 'CURRENT_CATEGORY'
+
+
+async def handle_current_category(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
+    category = update.message.text
+    questions = CategoryDTOStruct(context.bot_data.get('questions_per_category')).get_questions_by_category(category)
+    if category == 'Полезные ссылки':
+        keyboard = [[InlineKeyboardButton(text=question.text, url=question.answer)] for question in questions]
+    elif questions:
+        keyboard = [[InlineKeyboardButton(text=question.text, callback_data=question.pk)] for question in questions]
+    else:
+        categories = CategoryDTOStruct(context.bot_data.get('questions_per_category')).get_categories()
+        reply_markup = build_categories_menu(categories)
+
+        await update.message.reply_markdown_v2(text=INCORRECT_CATEGORY_MESSAGE, reply_markup=reply_markup)
+
+        return 'CURRENT_CATEGORY'
+
+    if not keyboard:
+        categories = CategoryDTOStruct(context.bot_data.get('questions_per_category')).get_categories()
+        reply_markup = build_categories_menu(categories)
+
+        await update.message.reply_markdown_v2(text=QUESTION_EMPTY_REQUEST_MESSAGE, reply_markup=reply_markup)
+
+        return 'CURRENT_CATEGORY'
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await update.message.reply_markdown_v2(
+        text=dedent(QUESTION_CATEGORY.format(category=category)),
         reply_markup=reply_markup,
     )
 
-    return 'CURRENT_QUESTION'
+    return 'CURRENT_CATEGORY' if category == 'Полезные ссылки' else 'CURRENT_QUESTION'
 
 
 async def handle_current_question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
-    questions = await context.application.storage.get_questions()
-    reply_markup = build_questions_menu(questions)
+    try:
+        question_pk = int(update.callback_query.data)
+    except AttributeError:
+        await context.bot.send_message(text=dedent(QUESTION_NOT_FOUND), chat_id=update.effective_chat.id)
 
-    answer = await context.application.storage.get_answer_by_question(update.message.text)
+        return 'CURRENT_QUESTION'
 
-    await update.message.reply_markdown_v2(
-        text=answer if answer else dedent(QUESTION_NOT_FOUND),
-        reply_markup=reply_markup,
-    )
+    question = CategoryDTOStruct(context.bot_data.get('questions_per_category')).get_question_by_pk(question_pk)
 
-    return 'CURRENT_QUESTION'
+    if not question:
+        await context.bot.send_message(text=dedent(QUESTION_NOT_FOUND), chat_id=update.effective_chat.id)
 
+        return 'CURRENT_QUESTION'
 
-@check_permissions
-async def handle_load(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
-    await update.message.reply_text(text=dedent(LOAD_QUESTION_MESSAGE), reply_markup=ReplyKeyboardRemove())
-    return 'LOAD_QUESTION'
+    if (path := Path(question.answer)) and path.exists():
+        await context.bot.send_photo(
+            photo=path.open(mode='rb'), chat_id=update.effective_chat.id, parse_mode=ParseMode.MARKDOWN_V2
+        )
+    else:
+        await context.bot.send_message(
+            text=dedent(QUESTION_TEMPLATE.format(question=question.text, answer=question.answer)),
+            chat_id=update.effective_chat.id,
+            parse_mode=ParseMode.MARKDOWN_V2,
+        )
 
+    await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=update.effective_message.id)
 
-async def handle_load_question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
-    message = update.message.text
-    context.user_data.setdefault('question', message)
-
-    await update.message.reply_text(text=dedent(LOAD_ANSWER_MESSAGE))
-
-    return 'LOAD_ANSWER'
-
-
-async def handle_load_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> str:
-    message = update.message.text_markdown_v2_urled
-    question = context.user_data.get('question')
-    await context.application.storage.save_question(
-        QuestionDTO(
-            question=question,
-            answer=message,
-        ),
-    )
-    del context.user_data['question']
-
-    await update.message.reply_text(text=dedent(LOAD_CREATED_MESSAGE))
-
-    return 'START'
+    return 'CURRENT_CATEGORY'

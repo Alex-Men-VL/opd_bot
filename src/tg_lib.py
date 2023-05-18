@@ -1,37 +1,44 @@
-from functools import wraps
+import json
+from pathlib import Path
 
 from telegram import (
     KeyboardButton,
     ReplyKeyboardMarkup,
 )
+from telegram.constants import MessageEntityType
+from telegram.helpers import escape_markdown
 
-from config import get_settings
-from dto import QuestionDTO
+from dto import (
+    CategoryDTO,
+    QuestionDTO,
+)
 
 
-def build_menu(buttons, n_cols, header_buttons=None, footer_buttons=None):
-    menu = [buttons[i : i + n_cols] for i in range(0, len(buttons), n_cols)]
-    if header_buttons:
-        menu.insert(0, [header_buttons])
-    if footer_buttons:
-        menu.append([footer_buttons])
-    return menu
+def load_questions(path: Path):
+    questions_per_category = []
+
+    with path.open() as questions_file:
+        data = json.load(questions_file)
+    for category in data:
+        questions = [
+            QuestionDTO(text=escape_markdown(text, version=2), answer=answer) for text, answer in data[category].items()
+        ]
+        questions_per_category.append(
+            CategoryDTO(
+                title=category,
+                questions=questions,
+            )
+        )
+    return questions_per_category
+
+
+def build_categories_menu(categories: list[str]) -> ReplyKeyboardMarkup:
+    buttons = [[KeyboardButton(category)] for category in categories]
+    reply_markup = ReplyKeyboardMarkup(buttons, resize_keyboard=True, one_time_keyboard=True)
+    return reply_markup
 
 
 def build_questions_menu(questions: list[QuestionDTO]) -> ReplyKeyboardMarkup:
     button_list = [[KeyboardButton(question.question)] for question in questions]
     reply_markup = ReplyKeyboardMarkup(button_list, resize_keyboard=True)
     return reply_markup
-
-
-def check_permissions(func):
-    @wraps(func)
-    async def wrapped(update, context, *args, **kwargs):
-        user_id = update.effective_user.id
-        settings = get_settings()
-        if user_id not in settings.bot_admin_ids and not settings.debug:
-            await update.message.reply_text('Доступ запрещен')
-            return
-        return await func(update, context, *args, **kwargs)
-
-    return wrapped

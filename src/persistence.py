@@ -53,7 +53,7 @@ class RedisPersistence(BasePersistence[UD, CD, BD]):
         self.callback_data_key = callback_data_key
         self.chat_data_key = chat_data_key
         self.conversations_key = conversations_key
-        self._initial_data = initial_data or {}
+        self._initial_data = initial_data
         self.on_flush = on_flush
         self.user_data: Optional[Dict[int, UD]] = None
         self.chat_data: Optional[Dict[int, CD]] = None
@@ -108,10 +108,9 @@ class RedisPersistence(BasePersistence[UD, CD, BD]):
         logger.info('БД успешно проинициализирована')
 
     async def _load_redis(self) -> None:
-        is_initialized = await self._redis_pool_get('is_initialized')
-        if not is_initialized:
+        if self._initial_data:
             await self._perform_initialization()
-            await self._redis_pool_set('is_initialized', b'True')
+            self._initial_data = {}
         try:
             data_bytes = await self._redis_pool_get(self.main_key)
             if data_bytes is None:
