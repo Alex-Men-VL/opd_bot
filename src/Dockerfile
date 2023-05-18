@@ -38,9 +38,7 @@ RUN groupadd -r ${APP_USER} \
 COPY poetry.lock pyproject.toml ${APP_ROOT}/
 
 RUN --mount=type=cache,target="$POETRY_CACHE_DIR" \
-    poetry install --no-interaction --no-ansi \
-    && pip install setuptools
-
+    poetry install --no-interaction --no-ansi
 COPY ./src ${APP_ROOT}
 
 USER ${APP_USER}
