@@ -84,7 +84,13 @@ async def handle_current_question(update: Update, context: ContextTypes.DEFAULT_
 
         return 'CURRENT_QUESTION'
 
-    if (path := Path(question.answer)) and path.is_file() and path.exists():
+    path = None
+    try:
+        path = Path(question.answer)
+    except OSError:
+        pass
+
+    if path and path.is_file() and path.exists():
         await context.bot.send_photo(
             photo=path.open(mode='rb'), chat_id=update.effective_chat.id, parse_mode=ParseMode.MARKDOWN_V2
         )
