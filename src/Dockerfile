@@ -37,8 +37,9 @@ RUN groupadd -r ${APP_USER} \
 
 COPY poetry.lock pyproject.toml ${APP_ROOT}/
 
-RUN --mount=type=cache,target="$POETRY_CACHE_DIR" \
-    poetry install --no-interaction --no-ansi
+RUN poetry config virtualenvs.create false \
+    && poetry install
+
 COPY ./src ${APP_ROOT}
 
 USER ${APP_USER}
